@@ -35,7 +35,33 @@ public class MultiThreadedEchoServer
         }
     }
 
+    public static void Main()
+    {
+        TcpListener? listener = null;
+        try
+        {
+            listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 8080);
+            listener.Start();
+            Console.WriteLine("MultiThreadedEchoServer ka filluar...");
+            while (true)
+            {
+                Console.WriteLine("Në pritje të lidhjeve hyrëse të klientit...");
+                TcpClient client = listener.AcceptTcpClient();
+                Console.WriteLine("U pranua lidhja e re e klientit!");
+                Thread t = new(ProcessClientRequests);
+                t.Start(client);
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+        finally
+        {
+            listener?.Stop();
+        }
 
+    }
 
 }
 
