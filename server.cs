@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 class UDPServer
 {
     private const int PORT = 6000;
-    private const string IP_ADDRESS = "192.168.0.18";
+    private const string IP_ADDRESS = "192.168.0.20";
 
     private static int clientCount = 0;
 
@@ -19,12 +19,12 @@ class UDPServer
     {
         readOnly = false;
 
-        if (credentials == "admin:grupi10")
+        if (credentials == "admin:admin123")
         {
             readOnly = false;
             return true;
         }
-        else if (credentials == "readonly:fiek2023")
+        else if (credentials == "readonly:readonly123")
         {
             readOnly = true;
             return true;
@@ -58,127 +58,123 @@ class UDPServer
         }
         catch (Exception ex)
         {
-            return "Error gjate ekzekutimit te komandes: " + ex.Message;
+            return "Error executing command: " + ex.Message;
         }
     }
 
-  private static void HandleClient(UdpClient server, IPEndPoint clientAddress)
-{
-    try
+    private static void HandleClient(UdpClient server, IPEndPoint clientAddress)
     {
-        while (true)
+        try
         {
-            byte[] receivedBytes = server.Receive(ref clientAddress);
-            string request = Encoding.ASCII.GetString(receivedBytes);
-
-            bool readOnly;
-            if (Authenticate(request, out readOnly))
+            while (true)
             {
-                const string authSuccessMessage = "Autentikim i suksesshem. Lidhja u mundesua.";
-                server.Send(Encoding.ASCII.GetBytes(authSuccessMessage), authSuccessMessage.Length, clientAddress);
+                byte[] receivedBytes = server.Receive(ref clientAddress);
+                string request = Encoding.ASCII.GetString(receivedBytes);
 
-                clientCount++;
-
-                if (clientCount > 4)
+                bool readOnly;
+                if (Authenticate(request, out readOnly))
                 {
-                    const string noSpaceMessage = "U mbrri limiti i klienteve!";
-                    server.Send(Encoding.ASCII.GetBytes(noSpaceMessage), noSpaceMessage.Length, clientAddress);
-                }
+                    const string authSuccessMessage = "Authentication successful. Access granted.";
+                    server.Send(Encoding.ASCII.GetBytes(authSuccessMessage), authSuccessMessage.Length, clientAddress);
 
-                while (true)
-                {
-                    receivedBytes = server.Receive(ref clientAddress);
-                    string command = Encoding.ASCII.GetString(receivedBytes);
-                    string[] commandParts = command.Split(' ');
+                    clientCount++;
 
-                    if (commandParts.Length > 0)
+                    if (clientCount > 4)
                     {
-                        string action = commandParts[0];
+                        const string noSpaceMessage = "Limit of clients reached!";
+                        server.Send(Encoding.ASCII.GetBytes(noSpaceMessage), noSpaceMessage.Length, clientAddress);
+                    }
 
-                        if (action == "read")
+                    while (true)
+                    {
+                        receivedBytes = server.Receive(ref clientAddress);
+                        string command = Encoding.ASCII.GetString(receivedBytes);
+                        string[] commandParts = command.Split(' ');
+
+                        if (commandParts.Length > 0)
                         {
-                            if (commandParts.Length > 1)
+                            string action = commandParts[0];
+
+                            if (action == "read")
                             {
-                                string fileName = commandParts[1];
-                                try
+                                if (commandParts.Length > 1)
                                 {
-                                    string fileContent = File.ReadAllText(fileName);
-                                    server.Send(Encoding.ASCII.GetBytes(fileContent), fileContent.Length, clientAddress);
-                                }
-                                catch (FileNotFoundException)
-                                {
-                                    const string errorMessage = "Error: File nuk u gjet.";
-                                    server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                    string fileName = commandParts[1];
+                                    try
+                                    {
+                                        string fileContent = File.ReadAllText(fileName);
+                                        server.Send(Encoding.ASCII.GetBytes(fileContent), fileContent.Length, clientAddress);
+                                    }
+                                    catch (FileNotFoundException)
+                                    {
+                                        const string errorMessage = "Error: File not found.";
+                                        server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                    }
                                 }
                             }
-                        }
-                        else if (action == "write" && !readOnly)
-                        {
-                            if (commandParts.Length > 2)
+                            else if (action == "write" && !readOnly)
                             {
-                                string content = commandParts[1];
-                                string fileName = commandParts[2];
-                                try
+                                if (commandParts.Length > 2)
                                 {
-                                    File.WriteAllText(fileName, content);
-                                    const string successMessage = "File u mbishkrua me sukses.";
-                                    server.Send(Encoding.ASCII.GetBytes(successMessage), successMessage.Length, clientAddress);
-                                }
-                                catch (Exception)
-                                {
-                                    const string errorMessage = "Error: Pamundesi per te mbishkruar file.";
-                                    server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                    string content = commandParts[1];
+                                    string fileName = commandParts[2];
+                                    try
+                                    {
+                                        File.WriteAllText(fileName, content);
+                                        const string successMessage = "File was written successfully.";
+                                        server.Send(Encoding.ASCII.GetBytes(successMessage), successMessage.Length, clientAddress);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        const string errorMessage = "Error: Unable to write to file.";
+                                        server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                    }
                                 }
                             }
-                        }
-
-                        else if (action == "delete" && !readOnly)
-                        {
-                            if (commandParts.Length > 1)
+                            else if (action == "delete" && !readOnly)
                             {
-                                string fileName = commandParts[1];
-                                try
+                                if (commandParts.Length > 1)
                                 {
-                                    File.Delete(fileName);
-                                    const string successMessage = "File u fshi.";
-                                    server.Send(Encoding.ASCII.GetBytes(successMessage), successMessage.Length, clientAddress);
-                                }
-                                catch (Exception)
-                                {
-                                    const string errorMessage = "Error: Pamundesi per te fshire file.";
-                                    server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                    string fileName = commandParts[1];
+                                    try
+                                    {
+                                        File.Delete(fileName);
+                                        const string successMessage = "File was deleted successfully.";
+                                        server.Send(Encoding.ASCII.GetBytes(successMessage), successMessage.Length, clientAddress);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        const string errorMessage = "Error: Unable to delete file.";
+                                        server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                    }
                                 }
                             }
-                        }
-                        else if (action == "execute" && !readOnly)
-                        {
-                            string commandToExecute = command.Substring(action.Length).Trim();
-                            string result = ExecuteCommand(commandToExecute);
-                            server.Send(Encoding.ASCII.GetBytes(result), result.Length, clientAddress);
-                        }
-
-
-                    
-                        else
-                        {
-                            const string errorMessage = "Error: Komande e pa-autorizuar.";
-                            server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                            else if (action == "execute" && !readOnly)
+                            {
+                                string commandToExecute = command.Substring(action.Length).Trim();
+                                string result = ExecuteCommand(commandToExecute);
+                                server.Send(Encoding.ASCII.GetBytes(result), result.Length, clientAddress);
+                            }
+                            else
+                            {
+                                const string errorMessage = "Error: Unauthorized or unsupported command.";
+                                server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                            }
                         }
                     }
                 }
-            }
-            else
-            {
-                const string authFailureMessage = "Autentikimi deshtoi. Lidhja nuk u realizua.";
-                server.Send(Encoding.ASCII.GetBytes(authFailureMessage), authFailureMessage.Length, clientAddress);
+                else
+                {
+                    const string authFailureMessage = "Authentication failed. Access denied.";
+                    server.Send(Encoding.ASCII.GetBytes(authFailureMessage), authFailureMessage.Length, clientAddress);
+                }
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling client: {ex.Message}");
+        }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error handling client: {ex.Message}");
-    }
-}
 
     static void Main()
     {
@@ -186,7 +182,7 @@ class UDPServer
 
         try
         {
-            Console.WriteLine($"UDP Serveri po degjon ne: {IP_ADDRESS}:{PORT}");
+            Console.WriteLine($"UDP Server is listening on {IP_ADDRESS}:{PORT}");
 
             List<Thread> clientThreads = new List<Thread>();
 
