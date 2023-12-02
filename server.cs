@@ -62,7 +62,100 @@ class UDPServer
         }
     }
 
-   //
+  private static void HandleClient(UdpClient server, IPEndPoint clientAddress)
+{
+    try
+    {
+        while (true)
+        {
+            byte[] receivedBytes = server.Receive(ref clientAddress);
+            string request = Encoding.ASCII.GetString(receivedBytes);
+
+            bool readOnly;
+            if (Authenticate(request, out readOnly))
+            {
+                const string authSuccessMessage = "Autentikim i suksesshem. Lidhja u mundesua.";
+                server.Send(Encoding.ASCII.GetBytes(authSuccessMessage), authSuccessMessage.Length, clientAddress);
+
+                clientCount++;
+
+                if (clientCount > 4)
+                {
+                    const string noSpaceMessage = "U mbrri limiti i klienteve!";
+                    server.Send(Encoding.ASCII.GetBytes(noSpaceMessage), noSpaceMessage.Length, clientAddress);
+                }
+
+                while (true)
+                {
+                    receivedBytes = server.Receive(ref clientAddress);
+                    string command = Encoding.ASCII.GetString(receivedBytes);
+                    string[] commandParts = command.Split(' ');
+
+                    if (commandParts.Length > 0)
+                    {
+                        string action = commandParts[0];
+
+                        if (action == "read")
+                        {
+                            if (commandParts.Length > 1)
+                            {
+                                string fileName = commandParts[1];
+                                try
+                                {
+                                    string fileContent = File.ReadAllText(fileName);
+                                    server.Send(Encoding.ASCII.GetBytes(fileContent), fileContent.Length, clientAddress);
+                                }
+                                catch (FileNotFoundException)
+                                {
+                                    const string errorMessage = "Error: File nuk u gjet.";
+                                    server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                }
+                            }
+                        }
+                        else if (action == "write" && !readOnly)
+                        {
+                            if (commandParts.Length > 2)
+                            {
+                                string content = commandParts[1];
+                                string fileName = commandParts[2];
+                                try
+                                {
+                                    File.WriteAllText(fileName, content);
+                                    const string successMessage = "File u mbishkrua me sukses.";
+                                    server.Send(Encoding.ASCII.GetBytes(successMessage), successMessage.Length, clientAddress);
+                                }
+                                catch (Exception)
+                                {
+                                    const string errorMessage = "Error: Pamundesi per te mbishkruar file.";
+                                    server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                }
+                            }
+                        }
+
+
+
+
+                    //
+                        else
+                        {
+                            const string errorMessage = "Error: Komande e pa-autorizuar.";
+                            server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                const string authFailureMessage = "Autentikimi deshtoi. Lidhja nuk u realizua.";
+                server.Send(Encoding.ASCII.GetBytes(authFailureMessage), authFailureMessage.Length, clientAddress);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error handling client: {ex.Message}");
+    }
+}
 
     static void Main()
     {
