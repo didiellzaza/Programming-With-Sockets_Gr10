@@ -2,6 +2,7 @@
 Implementimi i komunikimit klient-server përmes sockets, duke përdorur protokollin UDP dhe gjuhën programuese C#.
 
 Anëtarët e grupit:
-Dina Pirana
-Diellza Prebreza
-Diellza Raçi
+Diellza Prebreza,
+Dina Pirana,
+Diellza Raçi.
+
