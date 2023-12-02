@@ -1,43 +1,23 @@
-using System.IO;
-using System.Net.Sockets;
 using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
-namespace Rrjeta
+class UDPClient
 {
-    public class EchoClient
+    private const int Port = 6000;
+    private static string Host = "192.168.0.18"; // IP adresa e serverit
+
+    static void Main(string[] args)
     {
-        public void StartClient(StreamReader reader)
-        {
-            if (reader is null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-            try
-            {
-                TcpClient client = new TcpClient("127.0.0.1", 8080);
-                reader = new StreamReader(client.GetStream());
-                StreamWriter writer = new StreamWriter(client.GetStream());
-                string s = string.Empty;
-                while (!s.Equals("Exit", StringComparison.Ordinal))
-                {
-                    Console.Write("Futni një string për ta dërguar te serveri: ");
-                    s = Console.ReadLine();
-                    Console.WriteLine();
-                    writer.WriteLine(s);
-                    writer.Flush();
-                    string server_string = reader.ReadLine();
-                    Console.WriteLine(server_string);
-                }
-                reader.Close();
-                writer.Close();
-                client.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-           
-        }
+        UdpClient client = new UdpClient();
+        IPEndPoint serverEndpoint = new IPEndPoint(IPAddress.Parse(Host), Port);
+
+        Console.Write("Shtyp kredencialet (username:password): ");
+        string credentials = Console.ReadLine();
+
+        //
+
+        client.Close();
     }
 }
-
