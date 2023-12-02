@@ -1,67 +1,100 @@
+using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
-using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
-public class MultiThreadedEchoServer
+class UDPServer
 {
-    private static void ProcessClientRequests(object argument)
+    private const int PORT = 6000;
+    private const string IP_ADDRESS = "192.168.0.18";
+
+    private static int clientCount = 0;
+
+    private static bool Authenticate(string credentials, out bool readOnly)
     {
-        TcpClient client = (TcpClient)argument;
-        try
+        readOnly = false;
+
+        if (credentials == "admin:grupi10")
         {
-            StreamReader reader = new(client.GetStream());
-            StreamWriter writer = new(client.GetStream());
-            string s = String.Empty;
-            while (!(s = reader.ReadLine()).Equals("Exit", StringComparison.Ordinal) || s == null)
-            {
-                Console.WriteLine("Nga Klienti =>> " + s);
-                writer.WriteLine("Nga Serveri =>> " + s);
-                writer.Flush();
-            }
-            reader.Close();
-            writer.Close();
-            client.Close();
-            Console.WriteLine("Duke mbyllur lidhjen e klientit...");
+            readOnly = false;
+            return true;
         }
-        catch (IOException)
+        else if (credentials == "readonly:fiek2023")
         {
-            Console.WriteLine("Problem komunikimi me klientin. Exiting thread.");
+            readOnly = true;
+            return true;
         }
-        finally
+        else
         {
-            client?.Close();
+            return false;
         }
     }
 
-    public static void Main()
+    private static string ExecuteCommand(string command)
     {
-        TcpListener? listener = null;
         try
         {
-            listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 8080);
-            listener.Start();
-            Console.WriteLine("MultiThreadedEchoServer ka filluar...");
+            System.Diagnostics.ProcessStartInfo procStartInfo =
+                new System.Diagnostics.ProcessStartInfo("cmd", "/c " + command);
+
+            procStartInfo.RedirectStandardOutput = true;
+            procStartInfo.UseShellExecute = false;
+            procStartInfo.CreateNoWindow = true;
+
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
+            process.StartInfo = procStartInfo;
+            process.Start();
+
+            string result = process.StandardOutput.ReadToEnd();
+
+            process.WaitForExit();
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return "Error gjate ekzekutimit te komandes: " + ex.Message;
+        }
+    }
+
+   //
+
+    static void Main()
+    {
+        UdpClient server = new UdpClient(new IPEndPoint(IPAddress.Parse(IP_ADDRESS), PORT));
+
+        try
+        {
+            Console.WriteLine($"UDP Serveri po degjon ne: {IP_ADDRESS}:{PORT}");
+
+            List<Thread> clientThreads = new List<Thread>();
+
             while (true)
             {
-                Console.WriteLine("Në pritje të lidhjeve hyrëse të klientit...");
-                TcpClient client = listener.AcceptTcpClient();
-                Console.WriteLine("U pranua lidhja e re e klientit!");
-                Thread t = new(ProcessClientRequests);
-                t.Start(client);
+                IPEndPoint clientAddress = new IPEndPoint(IPAddress.Any, 0);
+
+                if (clientThreads.Count < 2)
+                {
+                    Thread newClientThread = new Thread(() => HandleClient(server, clientAddress));
+                    newClientThread.Start();
+                    clientThreads.Add(newClientThread);
+                }
+
+                clientThreads = clientThreads.Where(t => t.IsAlive).ToList();
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine(e);
+            Console.WriteLine($"Error: {ex.Message}");
         }
         finally
         {
-            listener?.Stop();
+            server.Close();
         }
-
     }
-
 }
-
