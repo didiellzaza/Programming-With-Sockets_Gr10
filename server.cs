@@ -132,10 +132,33 @@ class UDPServer
                             }
                         }
 
+                        else if (action == "delete" && !readOnly)
+                        {
+                            if (commandParts.Length > 1)
+                            {
+                                string fileName = commandParts[1];
+                                try
+                                {
+                                    File.Delete(fileName);
+                                    const string successMessage = "File u fshi.";
+                                    server.Send(Encoding.ASCII.GetBytes(successMessage), successMessage.Length, clientAddress);
+                                }
+                                catch (Exception)
+                                {
+                                    const string errorMessage = "Error: Pamundesi per te fshire file.";
+                                    server.Send(Encoding.ASCII.GetBytes(errorMessage), errorMessage.Length, clientAddress);
+                                }
+                            }
+                        }
+                        else if (action == "execute" && !readOnly)
+                        {
+                            string commandToExecute = command.Substring(action.Length).Trim();
+                            string result = ExecuteCommand(commandToExecute);
+                            server.Send(Encoding.ASCII.GetBytes(result), result.Length, clientAddress);
+                        }
 
 
-
-                    //
+                    
                         else
                         {
                             const string errorMessage = "Error: Komande e pa-autorizuar.";
