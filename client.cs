@@ -47,7 +47,11 @@ class UDPClient
                     string response = Encoding.ASCII.GetString(responseBytes);
                     Console.WriteLine("Pergjigjja e serverit: " + response);
 
-                    //
+                    if (response == "U mbrri limiti i klienteve!")
+                    {
+                        Console.WriteLine("Duke diskonektuar klientin...");
+                        break;
+                    }
                 }
             }
         }
