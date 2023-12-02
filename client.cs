@@ -6,14 +6,14 @@ using System.Text;
 class UDPClient
 {
     private const int Port = 6000;
-    private static string Host = "192.168.0.18"; // IP adresa e serverit
+    private static string Host = "192.168.0.20"; // IP adresa e serverit
 
     static void Main(string[] args)
     {
         UdpClient client = new UdpClient();
         IPEndPoint serverEndpoint = new IPEndPoint(IPAddress.Parse(Host), Port);
 
-        Console.Write("Shtyp kredencialet (username:password): ");
+        Console.Write("Enter credentials (username:password): ");
         string credentials = Console.ReadLine();
 
         if (credentials != null)
@@ -23,18 +23,18 @@ class UDPClient
 
             byte[] authResponseBytes = client.Receive(ref serverEndpoint);
             string authResponse = Encoding.ASCII.GetString(authResponseBytes);
-            Console.WriteLine("Pergigjja e serverit: " + authResponse);
+            Console.WriteLine("Server response: " + authResponse);
 
-            if (authResponse == "Autentikimi i suksesshem. Lidhja u mundesua.")
+            if (authResponse == "Authentication successful. Access granted.")
             {
                 while (true)
                 {
-                    Console.Write("Shtyp nje komande ('read <emri_i_fajllit>', 'write <permbajtja> <emri_i_fajllit>', 'execute <komanda>' ose shtyp 'exit' per te perfunduar): ");
+                    Console.Write("Enter a command ('read <file_name>', 'write <string> <file_name>', 'delete <file_name>' or type 'exit' to end): ");
                     string command = Console.ReadLine();
 
                     if (command == "exit")
                     {
-                        const string exitMessage = "Klienti u diskonektua.";
+                        const string exitMessage = "Client disconnected.";
                         byte[] exitMessageBytes = Encoding.ASCII.GetBytes(exitMessage);
                         client.Send(exitMessageBytes, exitMessageBytes.Length, serverEndpoint);
                         break;
@@ -45,11 +45,11 @@ class UDPClient
 
                     byte[] responseBytes = client.Receive(ref serverEndpoint);
                     string response = Encoding.ASCII.GetString(responseBytes);
-                    Console.WriteLine("Pergjigjja e serverit: " + response);
+                    Console.WriteLine("Server Response: " + response);
 
-                    if (response == "U mbrri limiti i klienteve!")
+                    if (response == "Limit of clients reached!")
                     {
-                        Console.WriteLine("Duke diskonektuar klientin...");
+                        Console.WriteLine("Disconnecting the client...");
                         break;
                     }
                 }
