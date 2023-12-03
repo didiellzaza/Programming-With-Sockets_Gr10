@@ -41,7 +41,22 @@ class UDPClient
 
                     string command = Console.ReadLine();
 
-                    ///
+                    if (command == "exit")
+                    {
+                        const string exitMessage = "Client disconnected.";
+                        byte[] exitMessageBytes = Encoding.ASCII.GetBytes(exitMessage);
+                        client.Send(exitMessageBytes, exitMessageBytes.Length, serverEndpoint);
+                        break;
+                    }
+
+                    byte[] commandBytes = Encoding.ASCII.GetBytes(command);
+                    client.Send(commandBytes, commandBytes.Length, serverEndpoint);
+
+                    byte[] responseBytes = client.Receive(ref serverEndpoint);
+                    string response = Encoding.ASCII.GetString(responseBytes);
+                    Console.WriteLine("Server Response: " + response);
+
+///
                 }
             }
         }
