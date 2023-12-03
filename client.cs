@@ -56,7 +56,11 @@ class UDPClient
                     string response = Encoding.ASCII.GetString(responseBytes);
                     Console.WriteLine("Server Response: " + response);
 
-///
+                    if (response == "Limit of clients reached!")
+                    {
+                        Console.WriteLine("Disconnecting the client...");
+                        break;
+                    }
                 }
             }
         }
