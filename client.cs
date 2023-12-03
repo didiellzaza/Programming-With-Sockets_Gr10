@@ -26,7 +26,7 @@ class UDPClient
 
             if (authResponse == "Authentication successful. Access granted.")
             {
-                bool isReadOnly = credentials == "readonly:readonly123";
+                bool isReadOnly = credentials == "dina:pirana";
 
                 while (true)
                 {
